@@ -352,3 +352,11 @@ env/
 # IDEs
 .vscode/
 .idea/
+
+# Ignore system and config files
+*.pub
+*.pem
+*.key
+.DS_Store
+*.log
+.env
