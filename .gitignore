@@ -360,3 +360,6 @@ env/
 .DS_Store
 *.log
 .env
+# Ignore any accidental eval files or ssh agent outputs
+eval*
+*.pub
