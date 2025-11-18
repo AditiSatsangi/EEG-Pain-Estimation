@@ -2,7 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+/data/
 # C extensions
 *.so
 
@@ -67,7 +67,7 @@ __pypackages__/
 *.pub
 *.key
 eval*
-
+*.txt
 # Django / Flask
 local_settings.py
 db.sqlite3
@@ -88,3 +88,4 @@ celerybeat.pid
 *.manifest
 *.spec
 downloads/
+*.npz
