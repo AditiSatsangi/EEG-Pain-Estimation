@@ -1,0 +1,35 @@
+{
+  "task": "none_vs_pain",
+  "dataset": "Data_1000Hz",
+  "reproducibility": {
+    "random_seed": 42,
+    "note": "All random number generators (Python, NumPy, PyTorch, CUDA) were seeded for reproducibility"
+  },
+  "grid_search": {
+    "enabled": true,
+    "grid_epochs": 30,
+    "grid_patience": 10
+  },
+  "best_hyperparameters": {},
+  "dataset_info": {
+    "sampling_rate": 1000,
+    "time_points": 1001,
+    "channels": 64,
+    "n_samples": 77190,
+    "n_subjects": 219,
+    "n_classes": 2,
+    "class_names": [
+      "none",
+      "pain"
+    ]
+  },
+  "train_test_split": {
+    "train_samples": 57752,
+    "test_samples": 19438,
+    "train_subjects": 164,
+    "test_subjects": 55,
+    "test_size": 0.25,
+    "random_state": 42
+  },
+  "results": {}
+}

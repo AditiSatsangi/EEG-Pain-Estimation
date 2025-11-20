@@ -51,22 +51,18 @@ from tqdm import tqdm
 from typing import Tuple, Dict, Any, List
 from collections import Counter
 from itertools import product
-from sklearn.metrics import classification_report, confusion_matrix, balanced_accuracy_score, f1_score
-from sklearn.model_selection import GroupShuffleSplit
 from sklearn.preprocessing import LabelEncoder
-
+from sklearn.metrics import classification_report, confusion_matrix, balanced_accuracy_score, f1_score
+from sklearn.model_selection import GroupShuffleSplit, cross_val_score, StratifiedKFold
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+import pickle
+from datetime import datetime
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader, TensorDataset
-
-# ============================================================================
-# AUTHOR INFORMATION
-# ============================================================================
-__author__ = "DILANJAN DK"
-__email__ = "DDIYABAL@UWO.CA"
-__version__ = "1.0.0"
-
 # ============================================================================
 # REPRODUCIBILITY SETUP
 # ============================================================================
@@ -111,10 +107,9 @@ def set_seed(seed: int = 42) -> None:
     print(f"  - CUDA deterministic: True")
     print(f"  - CuDNN deterministic: True")
 
-# ============================================================================
+# ==================================================================
 # DATA LOADING
-# ============================================================================
-
+# ==================================================================
 def find_data_root(proj_root: str, dataset_name: str = 'Data') -> str:
     """
     Find the data root directory for the specified dataset.
@@ -142,7 +137,7 @@ def load_index(root: str) -> pd.DataFrame:
     Raises:
         FileNotFoundError: If index.csv is not found
     """
-    index_path = os.path.join(root, 'index.csv')
+    index_path = os.path.join(root, '/home/asatsan2/Projects/EEG-Pain-Estimation/data/index.csv')
     if not os.path.exists(index_path):
         raise FileNotFoundError(f"index.csv not found at {index_path}")
     
@@ -745,8 +740,9 @@ def train_one_model(model: nn.Module, train_loader: DataLoader, val_loader: Data
     
     criterion = nn.CrossEntropyLoss(weight=weights)
     optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5, verbose=False)
-    
+    #scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5, verbose=False)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
+
     if verbose:
         print(f"\nOptimizer: Adam")
         print(f"  Learning rate: {lr:.6f}")
@@ -869,6 +865,289 @@ def train_one_model(model: nn.Module, train_loader: DataLoader, val_loader: Data
     }
     
     return model, best_val_f1, training_info
+
+
+def create_model_directory(base_path: str, task: str) -> str:
+    """Create organized directory structure for saving models."""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    model_dir = os.path.join(base_path, 'saved_models', task, timestamp)
+    os.makedirs(model_dir, exist_ok=True)
+    
+    # Create subdirectories
+    os.makedirs(os.path.join(model_dir, 'deep_learning'), exist_ok=True)
+    os.makedirs(os.path.join(model_dir, 'classical_ml'), exist_ok=True)
+    os.makedirs(os.path.join(model_dir, 'metadata'), exist_ok=True)
+    
+    print(f"✓ Created model directory: {model_dir}")
+    return model_dir
+
+def save_dl_model(model: nn.Module, model_name: str, save_dir: str, 
+                  metadata: Dict, best_params: Dict) -> str:
+    """Save deep learning model with metadata."""
+    model_path = os.path.join(save_dir, 'deep_learning', f'{model_name}_best.pth')
+    
+    # Save model state dict
+    torch.save({
+        'model_state_dict': model.state_dict(),
+        'model_architecture': model.__class__.__name__,
+        'hyperparameters': best_params,
+        'metadata': metadata
+    }, model_path)
+    
+    # Save metadata as JSON
+    metadata_path = os.path.join(save_dir, 'metadata', f'{model_name}_metadata.json')
+    with open(metadata_path, 'w') as f:
+        json.dump({
+            'model_name': model_name,
+            'architecture': model.__class__.__name__,
+            'hyperparameters': best_params,
+            'training_info': metadata,
+            'saved_at': datetime.now().isoformat()
+        }, f, indent=2)
+    
+    print(f"  ✓ Saved DL model: {model_path}")
+    return model_path
+
+def save_classical_model(model, model_name: str, save_dir: str, 
+                        metadata: Dict, best_params: Dict) -> str:
+    """Save classical ML model with metadata."""
+    model_path = os.path.join(save_dir, 'classical_ml', f'{model_name}_best.pkl')
+    
+    # Save model using pickle
+    with open(model_path, 'wb') as f:
+        pickle.dump({
+            'model': model,
+            'model_type': model.__class__.__name__,
+            'hyperparameters': best_params,
+            'metadata': metadata
+        }, f)
+    
+    # Save metadata as JSON
+    metadata_path = os.path.join(save_dir, 'metadata', f'{model_name}_metadata.json')
+    with open(metadata_path, 'w') as f:
+        json.dump({
+            'model_name': model_name,
+            'model_type': model.__class__.__name__,
+            'hyperparameters': best_params,
+            'training_info': metadata,
+            'saved_at': datetime.now().isoformat()
+        }, f, indent=2)
+    
+    print(f"  ✓ Saved Classical ML model: {model_path}")
+    return model_path
+
+# ============================================================================
+# CLASSICAL ML MODELS
+# ============================================================================
+
+def prepare_features_for_classical_ml(X: torch.Tensor) -> np.ndarray:
+    """
+    Prepare EEG features for classical ML models.
+    Flattens (n_samples, n_channels, n_time) to (n_samples, n_channels * n_time)
+    """
+    if isinstance(X, torch.Tensor):
+        X = X.cpu().numpy()
+    
+    n_samples = X.shape[0]
+    X_flat = X.reshape(n_samples, -1)
+    
+    print(f"  Feature preparation: {X.shape} -> {X_flat.shape}")
+    return X_flat
+
+def train_svm(X_train: np.ndarray, y_train: np.ndarray, X_val: np.ndarray, 
+              y_val: np.ndarray, param_grid: Dict) -> Tuple[SVC, Dict, float]:
+    """Train SVM with grid search."""
+    print("\n" + "="*70)
+    print(" TRAINING SVM")
+    print("="*70)
+    
+    # Standardize features
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_val_scaled = scaler.transform(X_val)
+    
+    print(f"Features standardized: mean={X_train_scaled.mean():.4f}, std={X_train_scaled.std():.4f}")
+    
+    best_svm = None
+    best_f1 = 0.0
+    best_params = {}
+    
+    # Generate parameter combinations
+    param_keys = list(param_grid.keys())
+    param_values = [param_grid[k] for k in param_keys]
+    combinations = list(product(*param_values))
+    
+    print(f"Testing {len(combinations)} parameter combinations...")
+    
+    for i, values in enumerate(combinations):
+        params = dict(zip(param_keys, values))
+        print(f"\n[{i+1}/{len(combinations)}] Testing: {params}")
+        
+        # Train SVM
+        svm = SVC(**params, random_state=42)
+        svm.fit(X_train_scaled, y_train)
+        
+        # Validate
+        y_val_pred = svm.predict(X_val_scaled)
+        val_f1 = f1_score(y_val, y_val_pred, average='macro', zero_division=0)
+        val_acc = (y_val_pred == y_val).mean()
+        
+        print(f"  → Val F1: {val_f1:.4f} | Val Acc: {val_acc:.4f}")
+        
+        if val_f1 > best_f1:
+            best_f1 = val_f1
+            best_svm = svm
+            best_params = params
+            print(f"  ✓ New best!")
+    
+    print(f"\n✓ Best SVM parameters: {best_params}")
+    print(f"  Best validation F1: {best_f1:.4f}")
+    
+    return best_svm, {'scaler': scaler, **best_params}, best_f1
+
+def train_random_forest(X_train: np.ndarray, y_train: np.ndarray, 
+                       X_val: np.ndarray, y_val: np.ndarray, 
+                       param_grid: Dict) -> Tuple[RandomForestClassifier, Dict, float]:
+    """Train Random Forest with grid search."""
+    print("\n" + "="*70)
+    print(" TRAINING RANDOM FOREST")
+    print("="*70)
+    
+    best_rf = None
+    best_f1 = 0.0
+    best_params = {}
+    
+    # Generate parameter combinations
+    param_keys = list(param_grid.keys())
+    param_values = [param_grid[k] for k in param_keys]
+    combinations = list(product(*param_values))
+    
+    print(f"Testing {len(combinations)} parameter combinations...")
+    
+    for i, values in enumerate(combinations):
+        params = dict(zip(param_keys, values))
+        print(f"\n[{i+1}/{len(combinations)}] Testing: {params}")
+        
+        # Train Random Forest
+        rf = RandomForestClassifier(**params, random_state=42, n_jobs=-1)
+        rf.fit(X_train, y_train)
+        
+        # Validate
+        y_val_pred = rf.predict(X_val)
+        val_f1 = f1_score(y_val, y_val_pred, average='macro', zero_division=0)
+        val_acc = (y_val_pred == y_val).mean()
+        
+        print(f"  → Val F1: {val_f1:.4f} | Val Acc: {val_acc:.4f}")
+        
+        if val_f1 > best_f1:
+            best_f1 = val_f1
+            best_rf = rf
+            best_params = params
+            print(f"  ✓ New best!")
+    
+    print(f"\n✓ Best Random Forest parameters: {best_params}")
+    print(f"  Best validation F1: {best_f1:.4f}")
+    
+    return best_rf, best_params, best_f1
+
+# ============================================================================
+# EVALUATION FUNCTIONS
+# ============================================================================
+
+def evaluate_classical_model(model, X_test: np.ndarray, y_test: np.ndarray, 
+                            le: LabelEncoder, model_name: str,
+                            scaler=None) -> Dict[str, Any]:
+    """Evaluate classical ML model."""
+    print(f"\n{'='*70}")
+    print(f" EVALUATION: {model_name}")
+    print(f"{'='*70}")
+    
+    # Scale if scaler provided (for SVM)
+    if scaler is not None:
+        X_test_scaled = scaler.transform(X_test)
+        y_pred = model.predict(X_test_scaled)
+        y_probs = model.predict_proba(X_test_scaled) if hasattr(model, 'predict_proba') else None
+    else:
+        y_pred = model.predict(X_test)
+        y_probs = model.predict_proba(X_test) if hasattr(model, 'predict_proba') else None
+    
+    acc = (y_pred == y_test).mean()
+    bal_acc = balanced_accuracy_score(y_test, y_pred)
+    f1_macro = f1_score(y_test, y_pred, average='macro', zero_division=0)
+    f1_weighted = f1_score(y_test, y_pred, average='weighted', zero_division=0)
+    
+    from sklearn.metrics import precision_recall_fscore_support
+    precision, recall, f1_per_class, support = precision_recall_fscore_support(
+        y_test, y_pred, average=None, zero_division=0
+    )
+    
+    report = classification_report(y_test, y_pred, target_names=le.classes_, zero_division=0)
+    cm = confusion_matrix(y_test, y_pred)
+    
+    print(f"\nOverall Metrics:")
+    print(f"  Accuracy:           {acc:.4f} ({acc*100:.2f}%)")
+    print(f"  Balanced Accuracy:  {bal_acc:.4f} ({bal_acc*100:.2f}%)")
+    print(f"  Macro F1-Score:     {f1_macro:.4f}")
+    print(f"  Weighted F1-Score:  {f1_weighted:.4f}")
+    
+    results = {
+        'accuracy': acc,
+        'balanced_accuracy': bal_acc,
+        'f1_macro': f1_macro,
+        'f1_weighted': f1_weighted,
+        'precision_per_class': precision.tolist(),
+        'recall_per_class': recall.tolist(),
+        'f1_per_class': f1_per_class.tolist(),
+        'support_per_class': support.tolist(),
+        'report': report,
+        'confusion_matrix': cm.tolist(),
+        'class_names': le.classes_.tolist()
+    }
+    
+    if y_probs is not None:
+        max_probs = np.max(y_probs, axis=1)
+        results['mean_confidence'] = float(np.mean(max_probs))
+        results['std_confidence'] = float(np.std(max_probs))
+        print(f"  Mean Confidence:    {results['mean_confidence']:.4f} ± {results['std_confidence']:.4f}")
+    
+    return results
+
+# ============================================================================
+# PARAMETER GRIDS FOR CLASSICAL ML
+# ============================================================================
+
+CLASSICAL_ML_PARAM_GRIDS = {
+    'svm': {
+        'C': [0.1, 1.0, 10.0],
+        'kernel': ['rbf', 'linear'],
+        'gamma': ['scale', 'auto'],
+        'probability': [True]  # For confidence scores
+    },
+    'random_forest': {
+        'n_estimators': [100, 200, 300],
+        'max_depth': [10, 20, None],
+        'min_samples_split': [2, 5],
+        'min_samples_leaf': [1, 2],
+        'max_features': ['sqrt', 'log2']
+    }
+}
+
+# Reduced grids for faster training
+CLASSICAL_ML_PARAM_GRIDS_REDUCED = {
+    'svm': {
+        'C': [1.0, 10.0],
+        'kernel': ['rbf'],
+        'gamma': ['scale'],
+        'probability': [True]
+    },
+    'random_forest': {
+        'n_estimators': [100, 200],
+        'max_depth': [20, None],
+        'min_samples_split': [2],
+        'min_samples_leaf': [1],
+        'max_features': ['sqrt']
+    }
+}
 
 def evaluate_model(model: nn.Module, test_loader: DataLoader, device: str, le: LabelEncoder, 
                    model_name: str = "Model") -> Dict[str, Any]:
@@ -1067,7 +1346,7 @@ def grid_search_model(model_name: str, X_all: torch.Tensor, y_all: np.ndarray, g
                 model, train_loader, val_loader, y_train, device,
                 epochs=epochs, patience=patience, 
                 class_names=None, model_name=f"{model_name.upper()} (Grid Search)",
-                verbose=False, **training_params
+                verbose=True, **training_params
             )
             
             print(f"  → Validation F1: {val_f1:.4f} | Best epoch: {train_info['best_epoch']}")
@@ -1119,9 +1398,7 @@ def main():
         description="Train DL models on 1000 Hz EEG data with grid search",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=f"""
-Author: {__author__}
-Email: {__email__}
-Version: {__version__}
+
 
 Examples:
   # Train all models with grid search
@@ -1135,19 +1412,20 @@ Examples:
         """
     )
     
+    
     ap.add_argument('--models', nargs='+', 
-                    default=['cnn', 'lstm', 'transformer', 'cnn_transformer', 'deep_cnn_lstm'],
-                    choices=['cnn', 'lstm', 'transformer', 'cnn_transformer', 'deep_cnn_lstm'],
-                    help='Models to train')
+                default=['cnn', 'lstm', 'transformer', 'cnn_transformer', 'deep_cnn_lstm', 'svm', 'random_forest'],
+                choices=['cnn', 'lstm', 'transformer', 'cnn_transformer', 'deep_cnn_lstm', 'svm', 'random_forest', 'all'],
+                help='Models to train (use "all" for all models)')
     ap.add_argument('--task', default='none_vs_pain', 
                     choices=['pain_5class', 'none_vs_pain', 'pain_only', 'pain_threshold'],
                     help='Classification task')
     ap.add_argument('--epochs', type=int, default=50, help='Max epochs for training')
     ap.add_argument('--patience', type=int, default=15, help='Early stopping patience')
-    ap.add_argument('--data_root', type=str, default=None, help='Path to Data directory')
+    ap.add_argument('--data_root', type=str, default="/home/asatsan2/Projects/EEG-Pain-Estimation/data", help='Path to Data directory')
     ap.add_argument('--quick', action='store_true', help='Quick mode with fewer samples')
     ap.add_argument('--quick_n_per_subj', type=int, default=50, help='Samples per subject in quick mode')
-    ap.add_argument('--output_file', type=str, default='results_1000hz_gridsearch.json', 
+    ap.add_argument('--output_file', type=str, default='/home/asatsan2/Projects/EEG-Pain-Estimation/results_1000hz_gridsearch.json', 
                     help='Output JSON file for results')
     ap.add_argument('--seed', type=int, default=42, help='Random seed for reproducibility')
     ap.add_argument('--no-grid-search', action='store_true', 
@@ -1156,16 +1434,14 @@ Examples:
                     help='Max epochs per configuration during grid search')
     ap.add_argument('--grid-patience', type=int, default=10, 
                     help='Early stopping patience during grid search')
-    
+    ap.add_argument('--save_dir', type=str, default='/home/asatsan2/Projects/EEG-Pain-Estimation/saved_models',
+                    help='Directory to save trained models')
     args = ap.parse_args()
     
     # Set all random seeds for reproducibility
     print(f"\n{'='*70}")
     print(" INITIALIZATION")
     print(f"{'='*70}")
-    print(f"Author: {__author__}")
-    print(f"Email: {__email__}")
-    print(f"Version: {__version__}")
     print()
     set_seed(args.seed)
     
@@ -1291,7 +1567,7 @@ Examples:
         cls_name = le.classes_[cls_idx]
         percentage = count / len(y_test) * 100
         print(f"    {cls_name:20s}: {count:6,} ({percentage:5.2f}%)")
-    
+    """
     # Define hyperparameter grids for grid search
     param_grids = {
         'cnn': {
@@ -1336,8 +1612,76 @@ Examples:
             'weight_decay': [1e-5, 1e-4],
             'batch_size': [64, 128]
         }
+    }"""
+    # Add this section to replace the param_grids around line 920 in your script
+    # This reduces the grid size by ~80% while keeping good hyperparameter coverage
+
+    # REDUCED PARAMETER GRIDS FOR FASTER TRAINING
+    # Original grids tested ~20-50 combinations per model
+    # These reduced grids test ~4-8 combinations per model
+
+    param_grids = {
+        'cnn': {
+            'dropout': [0.4, 0.5],           # Reduced from 3 to 2 values
+            'lr': [5e-4, 1e-4],              # Reduced from 3 to 2 values
+            'weight_decay': [1e-5],          # Reduced from 2 to 1 value
+            'batch_size': [64]               # Reduced from 2 to 1 value
+        },
+        # Total combinations: 2 × 2 × 1 × 1 = 4 (was 18)
+        
+        'lstm': {
+            'hidden': [192, 256],            # Reduced from 3 to 2 values
+            'dropout': [0.4, 0.5],           # Reduced from 3 to 2 values
+            'bidirectional': [True],
+            'lr': [5e-4, 1e-4],              # Reduced from 3 to 2 values
+            'weight_decay': [1e-5],          # Reduced from 2 to 1 value
+            'batch_size': [64]               # Reduced from 2 to 1 value
+        },
+        # Total combinations: 2 × 2 × 1 × 2 × 1 × 1 = 8 (was 36)
+        
+        'transformer': {
+            'd_model': [128],                # Reduced from 2 to 1 value
+            'nhead': [8],                    # Reduced from 2 to 1 value
+            'num_layers': [3, 4],            # Reduced from 3 to 2 values
+            'dropout': [0.3],                # Reduced from 3 to 1 value
+            'lr': [1e-4, 5e-5],              # Reduced from 3 to 2 values
+            'weight_decay': [1e-5],
+            'batch_size': [64]
+        },
+        # Total combinations: 1 × 1 × 2 × 1 × 2 × 1 × 1 = 4 (was 18)
+        
+        'cnn_transformer': {
+            'cnn_filters': [64],             # Reduced from 3 to 1 value
+            'd_model': [128],                # Reduced from 2 to 1 value
+            'nhead': [8],
+            'num_layers': [3, 4],            # Reduced from 3 to 2 values
+            'dropout': [0.3],                # Reduced from 3 to 1 value
+            'lr': [5e-4, 1e-4],              # Reduced from 3 to 2 values
+            'weight_decay': [1e-5],
+            'batch_size': [64]
+        },
+        # Total combinations: 1 × 1 × 1 × 2 × 1 × 2 × 1 × 1 = 4 (was 24)
+        
+        'deep_cnn_lstm': {
+            'cnn_filters': [[32, 64, 128]],  # Reduced from 3 to 1 value
+            'lstm_hidden': [192, 256],       # Reduced from 3 to 2 values
+            'lstm_layers': [2],              # Reduced from 2 to 1 value
+            'dropout': [0.4],                # Reduced from 3 to 1 value
+            'lr': [5e-4, 1e-3],              # Reduced from 3 to 2 values
+            'weight_decay': [1e-5],          # Reduced from 2 to 1 value
+            'batch_size': [64]               # Reduced from 2 to 1 value
+        }
+        # Total combinations: 1 × 2 × 1 × 1 × 2 × 1 × 1 = 4 (was 36)
     }
-    
+
+# SUMMARY OF REDUCTION:
+# CNN: 18 → 4 combinations (78% reduction)
+# LSTM: 36 → 8 combinations (78% reduction)
+# Transformer: 18 → 4 combinations (78% reduction)
+# CNN-Transformer: 24 → 4 combinations (83% reduction)
+# DeepCNN-LSTM: 36 → 4 combinations (89% reduction)
+#
+# Total combinations: 132 → 24 (82% reduction in grid search time!)
     # Best known parameters (if skipping grid search)
     best_known_params = {
         'cnn': {
@@ -1585,9 +1929,6 @@ Examples:
     output_path = os.path.join(proj_root, args.output_file)
     with open(output_path, 'w') as f:
         json.dump({
-            'author': __author__,
-            'email': __email__,
-            'version': __version__,
             'task': args.task,
             'dataset': 'Data_1000Hz',
             'reproducibility': {
@@ -1625,7 +1966,101 @@ Examples:
     print(" TRAINING COMPLETE")
     print(f"{'='*70}")
     
-    return results
+
+
+    print(f"\n{'='*70}")
+    print(" CLASSICAL ML MODELS")
+    print(f"{'='*70}")
+
+    # Prepare features
+    print("\nPreparing features for classical ML...")
+    X_train_flat = prepare_features_for_classical_ml(X_train)
+    X_test_flat = prepare_features_for_classical_ml(X_test)
+
+    # Split for validation
+    print("\nCreating train/validation split...")
+    val_splitter = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=args.seed)
+    train_inner_idx, val_idx = next(val_splitter.split(X_train_flat, y_train, groups_train))
+    X_tr_flat, X_val_flat = X_train_flat[train_inner_idx], X_train_flat[val_idx]
+    y_tr, y_val = y_train[train_inner_idx], y_train[val_idx]
+
+    # Choose parameter grid
+    param_grids = CLASSICAL_ML_PARAM_GRIDS_REDUCED if args.quick else CLASSICAL_ML_PARAM_GRIDS
+
+    # Train SVM
+    if 'svm' in args.models or 'all' in args.models:
+        svm_model, svm_params, svm_val_f1 = train_svm(
+            X_tr_flat, y_tr, X_val_flat, y_val, param_grids['svm']
+        )
+        
+        # Evaluate
+        svm_metrics = evaluate_classical_model(
+            svm_model, X_test_flat, y_test, le, 'SVM',
+            scaler=svm_params['scaler']
+        )
+        
+        # Save model
+        save_classical_model(
+            svm_model, 'svm', model_save_dir, svm_metrics, svm_params
+        )
+        
+        results['svm'] = svm_metrics
+        best_hyperparams['svm'] = svm_params
+
+    # Train Random Forest
+    if 'random_forest' in args.models or 'all' in args.models:
+        rf_model, rf_params, rf_val_f1 = train_random_forest(
+            X_tr_flat, y_tr, X_val_flat, y_val, param_grids['random_forest']
+        )
+        
+        # Evaluate
+        rf_metrics = evaluate_classical_model(
+            rf_model, X_test_flat, y_test, le, 'Random Forest'
+        )
+        
+        # Save model
+        save_classical_model(
+            rf_model, 'random_forest', model_save_dir, rf_metrics, rf_params
+        )
+        
+        results['random_forest'] = rf_metrics
+        best_hyperparams['random_forest'] = rf_params
+        return results
 
 if __name__ == '__main__':
     main()
+"""
+python /home/asatsan2/Projects/EEG-Pain-Estimation/notebooks/dl_train_1000hz_gridsearch.py \
+    --task none_vs_pain \
+    --data_root /home/asatsan2/Projects/EEG-Pain-Estimation/data \
+    --models cnn lstm deep_cnn_lstm \
+    --grid-epochs 20 \
+    --grid-patience 7 \
+    --epochs 30 \
+    --patience 10 \
+    --seed 42
+    
+    python /home/asatsan2/Projects/EEG-Pain-Estimation/notebooks/dl_train_1000hz_gridsearch.py \
+    --task none_vs_pain \
+    --data_root /home/asatsan2/Projects/EEG-Pain-Estimation/data \
+    --no-grid-search \
+    --models cnn lstm deep_cnn_lstm
+
+    python /home/asatsan2/Projects/EEG-Pain-Estimation/notebooks/dl_train_1000hz_gridsearch.py \
+    --task none_vs_pain \
+    --data_root /home/asatsan2/Projects/EEG-Pain-Estimation/data \
+    --no-grid-search \
+    --models  transformer cnn_transformer 
+
+    python /home/asatsan2/Projects/EEG-Pain-Estimation/notebooks/dl_train_1000hz_gridsearch.py \
+    --task none_vs_pain \
+    --data_root /home/asatsan2/Projects/EEG-Pain-Estimation/data \
+    --no-grid-search \
+    --models cnn lstm transformer cnn_transformer deep_cnn_lstm
+
+    # Train all models including SVM and Random Forest
+python /home/asatsan2/Projects/EEG-Pain-Estimation/notebooks/dl_train_1000hz_gridsearch.py --task none_vs_pain --models cnn lstm svm random_forest
+python /home/asatsan2/Projects/EEG-Pain-Estimation/notebooks/dl_train_1000hz_gridsearch.py --task none_vs_pain --models svm random_forest
+
+# Save directory will be created automatically
+    """
