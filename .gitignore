@@ -3,6 +3,8 @@ __pycache__/
 
 # Ignore macOS metadata folder
 __MACOSX/
+.DS_Store
+._*
 
 
 *.py[cod]
