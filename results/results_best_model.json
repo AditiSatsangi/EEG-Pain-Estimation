@@ -1,4 +1,4 @@
-{
+{ 
   "task": "pain_threshold",
   "seed": 42,
   "n_channels": 64,
