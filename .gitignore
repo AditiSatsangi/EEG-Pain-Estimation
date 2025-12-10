@@ -1,5 +1,10 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
+
+# Ignore macOS metadata folder
+__MACOSX/
+
+
 *.py[cod]
 *$py.class
 /data/
@@ -20,9 +25,6 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 *.log
-
-# Ignore macOS metadata folder
-__MACOSX/
 
 
 # Unit test / coverage reports
