@@ -15,9 +15,10 @@ EEG-Pain-Estimation/
 ├── results/
 │   ├── figures/
 │   │   ├── Confusion.matrix.png
-│   │   ├── gradcam_projected_on_eeg (1).png
-│   │   ├── gradcam_windowaware (1).png
-│   │   └── window_embedding_heatmap (1).png
+│   │   ├── architecture.png
+│   │   ├── gradcam_projected_on_eeg.png
+│   │   ├── gradcam_windowaware.png
+│   │   └── window_embedding_heatmap.png
 │   └── results_best_model.json
 │
 ├── saved_models/
@@ -113,9 +114,15 @@ python scripts/train.py
 ### Deep Learning Models
 
 - **CNN Baselines** - Convolutional Neural Networks for spatial feature extraction
-- **Deep CNN-LSTM** - Combined CNN and LSTM for spatial-temporal analysis 
-- **Window-Aware CNN-LSTM** - Enhanced model with window-based attention mechanism (Best performing)
+- **Deep CNN-LSTM** - Combined CNN and LSTM for spatial-temporal analysis (Best performing)
+- **Window-Aware CNN-LSTM** - Enhanced model with window-based attention mechanism
 - **CNN-Transformer** - Hybrid architecture combining CNN and Transformer
+
+### Architecture Visualization
+
+<img src="results/figures/architecture.png" alt="Model Architecture" width="600">
+
+*Deep CNN-LSTM architecture showing the flow from EEG input through convolutional layers, LSTM layers, and final classification.*
 
 ### Classical Machine Learning
 
@@ -131,6 +138,10 @@ The project includes **Grad-CAM** (Gradient-weighted Class Activation Mapping) f
 - Visualize which EEG channels and time windows contribute most to predictions
 - Generate heatmaps overlaid on EEG signals
 - Window-aware attention visualizations
+
+<img src="results/figures/gradcam_windowaware.png" alt="Grad-CAM Visualization" width="700">
+
+*Example Grad-CAM visualization showing attention weights across EEG channels and time windows for pain detection.*
 
 Example outputs in `results/figures/`:
 - `gradcam_projected_on_eeg.png`
@@ -224,7 +235,6 @@ The project uses three key modules in `src/data/`:
 - Model interpretability
 - Visualization of important EEG features
 
-
 ## 🎯 Training Options
 
 ### Deep Learning with Grid Search
@@ -265,13 +275,12 @@ Fast training with default parameters for quick experimentation.
 - Matplotlib
 - Seaborn
 - tqdm
-  
 
 See `requirements.txt` or `environment.yml` for complete dependencies.
 
 ## 📊 Performance
 
-The **Window-Aware Deep CNN-LSTM** model achieves the best performance:
+The **Deep CNN-LSTM** model achieves the best performance:
 
 - Effectively captures both spatial (EEG channel) and temporal patterns
 - Robust across different pain estimation tasks
@@ -310,4 +319,3 @@ For questions or feedback, please open an issue on the GitHub repository.
 ---
 
 If you find this project useful, please consider giving it a star!
-
