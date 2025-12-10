@@ -59,6 +59,14 @@ EEG-Pain-Estimation/
 └── requirements.txt
 ```
 
+## 📊 Dataset
+
+This project uses the EEG pain dataset available on OpenNeuro:
+
+**Dataset Link:** [https://openneuro.org/datasets/ds005280/versions/1.0.0](https://openneuro.org/datasets/ds005280/versions/1.0.0)
+
+Download the dataset and preprocess it into the required format (see [Dataset Format](#-dataset-format) section below).
+
 ## 🚀 Quick Start
 
 ### 1. Install Dependencies
@@ -319,5 +327,4 @@ For questions or feedback, please open an issue on the GitHub repository.
 ---
 
 If you find this project useful, please consider giving it a star!
-
 
