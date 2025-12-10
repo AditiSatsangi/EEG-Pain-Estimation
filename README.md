@@ -113,8 +113,8 @@ python scripts/train.py
 ### Deep Learning Models
 
 - **CNN Baselines** - Convolutional Neural Networks for spatial feature extraction
-- **Deep CNN-LSTM** - Combined CNN and LSTM for spatial-temporal analysis (Best performing)
-- **Window-Aware CNN-LSTM** - Enhanced model with window-based attention mechanism
+- **Deep CNN-LSTM** - Combined CNN and LSTM for spatial-temporal analysis 
+- **Window-Aware CNN-LSTM** - Enhanced model with window-based attention mechanism (Best performing)
 - **CNN-Transformer** - Hybrid architecture combining CNN and Transformer
 
 ### Classical Machine Learning
@@ -224,6 +224,7 @@ The project uses three key modules in `src/data/`:
 - Model interpretability
 - Visualization of important EEG features
 
+
 ## 🎯 Training Options
 
 ### Deep Learning with Grid Search
@@ -264,12 +265,13 @@ Fast training with default parameters for quick experimentation.
 - Matplotlib
 - Seaborn
 - tqdm
+  
 
 See `requirements.txt` or `environment.yml` for complete dependencies.
 
 ## 📊 Performance
 
-The **Deep CNN-LSTM** model achieves the best performance:
+The **Window-Aware Deep CNN-LSTM** model achieves the best performance:
 
 - Effectively captures both spatial (EEG channel) and temporal patterns
 - Robust across different pain estimation tasks
@@ -308,3 +310,4 @@ For questions or feedback, please open an issue on the GitHub repository.
 ---
 
 If you find this project useful, please consider giving it a star!
+
