@@ -114,15 +114,15 @@ python scripts/train.py
 ### Deep Learning Models
 
 - **CNN Baselines** - Convolutional Neural Networks for spatial feature extraction
-- **Deep CNN-LSTM** - Combined CNN and LSTM for spatial-temporal analysis (Best performing)
-- **Window-Aware CNN-LSTM** - Enhanced model with window-based attention mechanism
+- **Deep CNN-LSTM** - Combined CNN and LSTM for spatial-temporal analysis 
+- **Window-Aware Deep CNN-LSTM** - Enhanced model with window-based attention mechanism (Best performing)
 - **CNN-Transformer** - Hybrid architecture combining CNN and Transformer
 
 ### Architecture Visualization
 
 <img src="results/figures/architecture.png" alt="Model Architecture" width="600">
 
-*Deep CNN-LSTM architecture showing the flow from EEG input through convolutional layers, LSTM layers, and final classification.*
+*Research workflow from EEG input through model training, and final classification.*
 
 ### Classical Machine Learning
 
@@ -280,7 +280,7 @@ See `requirements.txt` or `environment.yml` for complete dependencies.
 
 ## 📊 Performance
 
-The **Deep CNN-LSTM** model achieves the best performance:
+The **Window-Aware Deep CNN-LSTM** model achieves the best performance:
 
 - Effectively captures both spatial (EEG channel) and temporal patterns
 - Robust across different pain estimation tasks
@@ -300,7 +300,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ## ✍️ Author
 **Dilanjan Diyabalanage**
 
-PhD in Physics, Western University
+PhD Physics, Western University
 
 **Aditi Satsangi**
 
@@ -319,3 +319,4 @@ For questions or feedback, please open an issue on the GitHub repository.
 ---
 
 If you find this project useful, please consider giving it a star!
+
