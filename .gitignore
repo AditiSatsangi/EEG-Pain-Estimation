@@ -49,7 +49,7 @@ ipython_config.py
 env/
 venv/
 ENV/
-
+*.pth 
 # Python packages
 __pypackages__/
 
