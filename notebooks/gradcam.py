@@ -1,17 +1,3 @@
-#!/usr/bin/env python3
-"""
-Window-Aware Deep CNN-LSTM for EEG Pain Classification (with Grad-CAM)
-
-- Single model: window_aware_deep_cnn_lstm
-- Supports tasks: pain_5class, none_vs_pain, pain_only, pain_threshold
-- Grid search + early stopping
-- Interpretability:
-    * Grad-CAM over conv3 feature maps
-    * Window embedding heatmap
-
-Author: adapted for Aditi
-"""
-
 import os
 import sys
 import argparse
@@ -1087,8 +1073,6 @@ if __name__ == "__main__":
     main()
 
 """
-this i used mainly
-
 screen -dmS pain_window bash -lc "
 source ~/miniconda3/etc/profile.d/conda.sh &&
 conda activate eeg &&

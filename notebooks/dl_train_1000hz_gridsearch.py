@@ -1,44 +1,3 @@
-#!/usr/bin/env python3
-"""
-Deep Learning Models Training with Grid Search for 1000 Hz EEG Data
-
-This script trains multiple deep learning models on the original 1000 Hz EEG dataset
-with comprehensive hyperparameter grid search to find optimal parameters for each model.
-All models are trained with full reproducibility using random seeds.
-
-Author: DILANJAN DK
-Email: DDIYABAL@UWO.CA
-
-Models Included:
-    - CNN2D: 2D Convolutional Neural Network
-    - LSTM: Bidirectional Long Short-Term Memory
-    - Transformer: Transformer Encoder
-    - CNN-Transformer: Hybrid CNN-Transformer architecture
-    - DeepCNN-LSTM: Deep CNN followed by LSTM
-
-Usage Examples:
-    # Train all models with grid search on none_vs_pain task
-    python scripts/dl_train_1000hz_gridsearch.py --task none_vs_pain
-
-    # Train specific models with grid search
-    python scripts/dl_train_1000hz_gridsearch.py --task none_vs_pain --models cnn lstm transformer
-
-    # Train without grid search (use best known parameters)
-    python scripts/dl_train_1000hz_gridsearch.py --task none_vs_pain --no-grid-search
-
-    # Custom seed for reproducibility
-    python scripts/dl_train_1000hz_gridsearch.py --task none_vs_pain --seed 123
-
-    # Quick test run with fewer samples
-    python scripts/dl_train_1000hz_gridsearch.py --task none_vs_pain --quick --quick_n_per_subj 50
-
-Output:
-    - Results printed to console with detailed metrics
-    - Results saved to JSON file (default: results_1000hz_gridsearch.json)
-    - Includes accuracy, balanced accuracy, F1, precision, recall, confusion matrices
-    - Best hyperparameters for each model are saved
-"""
-
 import os
 import sys
 import argparse
@@ -137,7 +96,7 @@ def load_index(root: str) -> pd.DataFrame:
     Raises:
         FileNotFoundError: If index.csv is not found
     """
-    index_path = os.path.join(root, '/home/asatsan2/Projects/EEG-Pain-Estimation/data/index.csv')
+    index_path = os.path.join(root, 'index.csv') # /home/asatsan2/Projects/EEG-Pain-Estimation/data/index.csv
     if not os.path.exists(index_path):
         raise FileNotFoundError(f"index.csv not found at {index_path}")
     
