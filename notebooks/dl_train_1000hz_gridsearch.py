@@ -717,7 +717,7 @@ def train_one_model(model: nn.Module, train_loader: DataLoader, val_loader: Data
         class_names: List of class names (optional)
         model_name: Name of model for logging
         verbose: Whether to print training progress
-    
+
     Returns:
         Tuple of (trained model, best validation F1, training info dictionary)
     """
@@ -1389,7 +1389,6 @@ def grid_search_model(model_name: str, X_all: torch.Tensor, y_all: np.ndarray, g
 # ============================================================================
 # MAIN FUNCTION
 # ============================================================================
-
 def main():
     """Main function to run training with grid search."""
     
@@ -1398,7 +1397,6 @@ def main():
         description="Train DL models on 1000 Hz EEG data with grid search",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=f"""
-
 
 Examples:
   # Train all models with grid search
@@ -1411,7 +1409,6 @@ Examples:
   python {sys.argv[0]} --task none_vs_pain --no-grid-search
         """
     )
-    
     
     ap.add_argument('--models', nargs='+', 
                 default=['cnn', 'lstm', 'transformer', 'cnn_transformer', 'deep_cnn_lstm', 'svm', 'random_forest'],
@@ -1567,121 +1564,53 @@ Examples:
         cls_name = le.classes_[cls_idx]
         percentage = count / len(y_test) * 100
         print(f"    {cls_name:20s}: {count:6,} ({percentage:5.2f}%)")
-    """
-    # Define hyperparameter grids for grid search
-    param_grids = {
-        'cnn': {
-            'dropout': [0.3, 0.4, 0.5],
-            'lr': [1e-3, 5e-4, 1e-4],
-            'weight_decay': [1e-5, 1e-4],
-            'batch_size': [64, 128]
-        },
-        'lstm': {
-            'hidden': [128, 192, 256],
-            'dropout': [0.3, 0.4, 0.5],
-            'bidirectional': [True],
-            'lr': [1e-3, 5e-4, 1e-4],
-            'weight_decay': [1e-5, 1e-4],
-            'batch_size': [64, 128]
-        },
-        'transformer': {
-            'd_model': [128, 256],
-            'nhead': [8, 16],
-            'num_layers': [3, 4, 5],
-            'dropout': [0.2, 0.3, 0.4],
-            'lr': [5e-4, 1e-4, 5e-5],
-            'weight_decay': [1e-5],
-            'batch_size': [64]
-        },
-        'cnn_transformer': {
-            'cnn_filters': [32, 64, 128],
-            'd_model': [128, 256],
-            'nhead': [8],
-            'num_layers': [2, 3, 4],
-            'dropout': [0.2, 0.3, 0.4],
-            'lr': [1e-4, 5e-4, 1e-3],
-            'weight_decay': [1e-5],
-            'batch_size': [64]
-        },
-        'deep_cnn_lstm': {
-            'cnn_filters': [[32, 64, 128], [32, 64, 96], [16, 32, 64]],
-            'lstm_hidden': [128, 192, 256],
-            'lstm_layers': [2, 3],
-            'dropout': [0.3, 0.4, 0.5],
-            'lr': [3e-4, 5e-4, 1e-3],
-            'weight_decay': [1e-5, 1e-4],
-            'batch_size': [64, 128]
-        }
-    }"""
-    # Add this section to replace the param_grids around line 920 in your script
-    # This reduces the grid size by ~80% while keeping good hyperparameter coverage
-
+    
     # REDUCED PARAMETER GRIDS FOR FASTER TRAINING
-    # Original grids tested ~20-50 combinations per model
-    # These reduced grids test ~4-8 combinations per model
-
     param_grids = {
         'cnn': {
-            'dropout': [0.4, 0.5],           # Reduced from 3 to 2 values
-            'lr': [5e-4, 1e-4],              # Reduced from 3 to 2 values
-            'weight_decay': [1e-5],          # Reduced from 2 to 1 value
-            'batch_size': [64]               # Reduced from 2 to 1 value
+            'dropout': [0.4, 0.5],
+            'lr': [5e-4, 1e-4],
+            'weight_decay': [1e-5],
+            'batch_size': [64]
         },
-        # Total combinations: 2 × 2 × 1 × 1 = 4 (was 18)
-        
         'lstm': {
-            'hidden': [192, 256],            # Reduced from 3 to 2 values
-            'dropout': [0.4, 0.5],           # Reduced from 3 to 2 values
+            'hidden': [192, 256],
+            'dropout': [0.4, 0.5],
             'bidirectional': [True],
-            'lr': [5e-4, 1e-4],              # Reduced from 3 to 2 values
-            'weight_decay': [1e-5],          # Reduced from 2 to 1 value
-            'batch_size': [64]               # Reduced from 2 to 1 value
+            'lr': [5e-4, 1e-4],
+            'weight_decay': [1e-5],
+            'batch_size': [64]
         },
-        # Total combinations: 2 × 2 × 1 × 2 × 1 × 1 = 8 (was 36)
-        
         'transformer': {
-            'd_model': [128],                # Reduced from 2 to 1 value
-            'nhead': [8],                    # Reduced from 2 to 1 value
-            'num_layers': [3, 4],            # Reduced from 3 to 2 values
-            'dropout': [0.3],                # Reduced from 3 to 1 value
-            'lr': [1e-4, 5e-5],              # Reduced from 3 to 2 values
-            'weight_decay': [1e-5],
-            'batch_size': [64]
-        },
-        # Total combinations: 1 × 1 × 2 × 1 × 2 × 1 × 1 = 4 (was 18)
-        
-        'cnn_transformer': {
-            'cnn_filters': [64],             # Reduced from 3 to 1 value
-            'd_model': [128],                # Reduced from 2 to 1 value
+            'd_model': [128],
             'nhead': [8],
-            'num_layers': [3, 4],            # Reduced from 3 to 2 values
-            'dropout': [0.3],                # Reduced from 3 to 1 value
-            'lr': [5e-4, 1e-4],              # Reduced from 3 to 2 values
+            'num_layers': [3, 4],
+            'dropout': [0.3],
+            'lr': [1e-4, 5e-5],
             'weight_decay': [1e-5],
             'batch_size': [64]
         },
-        # Total combinations: 1 × 1 × 1 × 2 × 1 × 2 × 1 × 1 = 4 (was 24)
-        
+        'cnn_transformer': {
+            'cnn_filters': [64],
+            'd_model': [128],
+            'nhead': [8],
+            'num_layers': [3, 4],
+            'dropout': [0.3],
+            'lr': [5e-4, 1e-4],
+            'weight_decay': [1e-5],
+            'batch_size': [64]
+        },
         'deep_cnn_lstm': {
-            'cnn_filters': [[32, 64, 128]],  # Reduced from 3 to 1 value
-            'lstm_hidden': [192, 256],       # Reduced from 3 to 2 values
-            'lstm_layers': [2],              # Reduced from 2 to 1 value
-            'dropout': [0.4],                # Reduced from 3 to 1 value
-            'lr': [5e-4, 1e-3],              # Reduced from 3 to 2 values
-            'weight_decay': [1e-5],          # Reduced from 2 to 1 value
-            'batch_size': [64]               # Reduced from 2 to 1 value
+            'cnn_filters': [[32, 64, 128]],
+            'lstm_hidden': [192, 256],
+            'lstm_layers': [2],
+            'dropout': [0.4],
+            'lr': [5e-4, 1e-3],
+            'weight_decay': [1e-5],
+            'batch_size': [64]
         }
-        # Total combinations: 1 × 2 × 1 × 1 × 2 × 1 × 1 = 4 (was 36)
     }
 
-# SUMMARY OF REDUCTION:
-# CNN: 18 → 4 combinations (78% reduction)
-# LSTM: 36 → 8 combinations (78% reduction)
-# Transformer: 18 → 4 combinations (78% reduction)
-# CNN-Transformer: 24 → 4 combinations (83% reduction)
-# DeepCNN-LSTM: 36 → 4 combinations (89% reduction)
-#
-# Total combinations: 132 → 24 (82% reduction in grid search time!)
     # Best known parameters (if skipping grid search)
     best_known_params = {
         'cnn': {
@@ -1731,7 +1660,17 @@ Examples:
     results = {}
     best_hyperparams = {}
     
-    for model_name in args.models:
+    # Create model directory for saving
+    model_save_dir = create_model_directory(args.save_dir, args.task)
+    
+    # ============================================================================
+    # DEEP LEARNING MODELS
+    # ============================================================================
+    
+    # Filter to only DL models for this loop
+    dl_models = [m for m in args.models if m in ['cnn', 'lstm', 'transformer', 'cnn_transformer', 'deep_cnn_lstm']]
+    
+    for model_name in dl_models:
         print(f"\n{'='*70}")
         print(f" PROCESSING MODEL: {model_name.upper()}")
         print(f"{'='*70}")
@@ -1806,7 +1745,7 @@ Examples:
         print(f"  Trainable parameters: {trainable_params:,}")
         
         # Estimate model size
-        model_size_mb = total_params * 4 / 1024**2  # Assuming float32
+        model_size_mb = total_params * 4 / 1024**2
         print(f"  Estimated model size: ~{model_size_mb:.2f} MB")
         
         # Create train/val split for early stopping
@@ -1865,6 +1804,9 @@ Examples:
         metrics['best_hyperparameters'] = best_params
         results[model_name] = metrics
         
+        # Save DL model
+        save_dl_model(model, model_name, model_save_dir, metrics, best_params)
+        
         print(f"\n{'='*70}")
         print(f" DETAILED RESULTS: {model_name.upper()}")
         print(f"{'='*70}")
@@ -1911,7 +1853,74 @@ Examples:
             print(f"  Best validation accuracy: {train_info['best_val_acc']:.4f}")
             print(f"  Best validation F1: {train_info['best_val_f1']:.4f}")
     
-    # Final Summary
+    # ============================================================================
+    # CLASSICAL ML MODELS
+    # ============================================================================
+    
+    # Train classical ML models if requested
+    if 'svm' in args.models or 'random_forest' in args.models or 'all' in args.models:
+        print(f"\n{'='*70}")
+        print(" CLASSICAL ML MODELS")
+        print(f"{'='*70}")
+
+        # Prepare features
+        print("\nPreparing features for classical ML...")
+        X_train_flat = prepare_features_for_classical_ml(X_train)
+        X_test_flat = prepare_features_for_classical_ml(X_test)
+
+        # Split for validation
+        print("\nCreating train/validation split...")
+        val_splitter = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=args.seed)
+        train_inner_idx, val_idx = next(val_splitter.split(X_train_flat, y_train, groups_train))
+        X_tr_flat, X_val_flat = X_train_flat[train_inner_idx], X_train_flat[val_idx]
+        y_tr, y_val = y_train[train_inner_idx], y_train[val_idx]
+
+        # Choose parameter grid
+        param_grids_classical = CLASSICAL_ML_PARAM_GRIDS_REDUCED if args.quick else CLASSICAL_ML_PARAM_GRIDS
+
+        # Train SVM
+        if 'svm' in args.models or 'all' in args.models:
+            svm_model, svm_params, svm_val_f1 = train_svm(
+                X_tr_flat, y_tr, X_val_flat, y_val, param_grids_classical['svm']
+            )
+            
+            # Evaluate
+            svm_metrics = evaluate_classical_model(
+                svm_model, X_test_flat, y_test, le, 'SVM',
+                scaler=svm_params['scaler']
+            )
+            
+            # Save model
+            save_classical_model(
+                svm_model, 'svm', model_save_dir, svm_metrics, svm_params
+            )
+            
+            results['svm'] = svm_metrics
+            best_hyperparams['svm'] = svm_params
+
+        # Train Random Forest
+        if 'random_forest' in args.models or 'all' in args.models:
+            rf_model, rf_params, rf_val_f1 = train_random_forest(
+                X_tr_flat, y_tr, X_val_flat, y_val, param_grids_classical['random_forest']
+            )
+            
+            # Evaluate
+            rf_metrics = evaluate_classical_model(
+                rf_model, X_test_flat, y_test, le, 'Random Forest'
+            )
+            
+            # Save model
+            save_classical_model(
+                rf_model, 'random_forest', model_save_dir, rf_metrics, rf_params
+            )
+            
+            results['random_forest'] = rf_metrics
+            best_hyperparams['random_forest'] = rf_params
+    
+    # ============================================================================
+    # FINAL SUMMARY
+    # ============================================================================
+    
     print(f"\n{'='*70}")
     print(" FINAL SUMMARY - 1000 Hz Results")
     print(f"{'='*70}")
@@ -1940,7 +1949,7 @@ Examples:
                 'grid_epochs': args.grid_epochs if not args.no_grid_search else None,
                 'grid_patience': args.grid_patience if not args.no_grid_search else None
             },
-            'best_hyperparameters': best_hyperparams if not args.no_grid_search else best_known_params,
+            'best_hyperparameters': best_hyperparams,
             'dataset_info': {
                 'sampling_rate': 1000,
                 'time_points': int(n_time),
@@ -1965,81 +1974,35 @@ Examples:
     print(f"\n{'='*70}")
     print(" TRAINING COMPLETE")
     print(f"{'='*70}")
-    
 
-
-    print(f"\n{'='*70}")
-    print(" CLASSICAL ML MODELS")
-    print(f"{'='*70}")
-
-    # Prepare features
-    print("\nPreparing features for classical ML...")
-    X_train_flat = prepare_features_for_classical_ml(X_train)
-    X_test_flat = prepare_features_for_classical_ml(X_test)
-
-    # Split for validation
-    print("\nCreating train/validation split...")
-    val_splitter = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=args.seed)
-    train_inner_idx, val_idx = next(val_splitter.split(X_train_flat, y_train, groups_train))
-    X_tr_flat, X_val_flat = X_train_flat[train_inner_idx], X_train_flat[val_idx]
-    y_tr, y_val = y_train[train_inner_idx], y_train[val_idx]
-
-    # Choose parameter grid
-    param_grids = CLASSICAL_ML_PARAM_GRIDS_REDUCED if args.quick else CLASSICAL_ML_PARAM_GRIDS
-
-    # Train SVM
-    if 'svm' in args.models or 'all' in args.models:
-        svm_model, svm_params, svm_val_f1 = train_svm(
-            X_tr_flat, y_tr, X_val_flat, y_val, param_grids['svm']
-        )
-        
-        # Evaluate
-        svm_metrics = evaluate_classical_model(
-            svm_model, X_test_flat, y_test, le, 'SVM',
-            scaler=svm_params['scaler']
-        )
-        
-        # Save model
-        save_classical_model(
-            svm_model, 'svm', model_save_dir, svm_metrics, svm_params
-        )
-        
-        results['svm'] = svm_metrics
-        best_hyperparams['svm'] = svm_params
-
-    # Train Random Forest
-    if 'random_forest' in args.models or 'all' in args.models:
-        rf_model, rf_params, rf_val_f1 = train_random_forest(
-            X_tr_flat, y_tr, X_val_flat, y_val, param_grids['random_forest']
-        )
-        
-        # Evaluate
-        rf_metrics = evaluate_classical_model(
-            rf_model, X_test_flat, y_test, le, 'Random Forest'
-        )
-        
-        # Save model
-        save_classical_model(
-            rf_model, 'random_forest', model_save_dir, rf_metrics, rf_params
-        )
-        
-        results['random_forest'] = rf_metrics
-        best_hyperparams['random_forest'] = rf_params
-        return results
 
 if __name__ == '__main__':
     main()
-"""
-python /home/asatsan2/Projects/EEG-Pain-Estimation/notebooks/dl_train_1000hz_gridsearch.py \
+    
+    """
+    screen -S myjob -dm python /home/asatsan2/Projects/EEG-Pain-Estimation/notebooks/dl_train_1000hz_gridsearch.py \
     --task none_vs_pain \
     --data_root /home/asatsan2/Projects/EEG-Pain-Estimation/data \
-    --models cnn lstm deep_cnn_lstm \
+    --models  svm random_forest \
     --grid-epochs 20 \
     --grid-patience 7 \
     --epochs 30 \
     --patience 10 \
     --seed 42
-    
+
+    screen -S painjob1 -dm bash -c "
+    conda activate eeg;
+         python /home/asatsan2/Projects/EEG-Pain-Estimation/notebooks/dl_train_1000hz_gridsearch.py \
+         --task none_vs_pain \
+        --data_root /home/asatsan2/Projects/EEG-Pain-Estimation/data \
+        --grid-epochs 20 \
+        --grid-patience 7 \
+        --epochs 30 \
+        --patience 10 \
+        --models cnn_transformer
+        --seed 42 > train.log 2>&1
+    "
+    cnn lstm deep_cnn_lstm transformer cnn_transformer 
     python /home/asatsan2/Projects/EEG-Pain-Estimation/notebooks/dl_train_1000hz_gridsearch.py \
     --task none_vs_pain \
     --data_root /home/asatsan2/Projects/EEG-Pain-Estimation/data \
@@ -2049,8 +2012,18 @@ python /home/asatsan2/Projects/EEG-Pain-Estimation/notebooks/dl_train_1000hz_gri
     python /home/asatsan2/Projects/EEG-Pain-Estimation/notebooks/dl_train_1000hz_gridsearch.py \
     --task none_vs_pain \
     --data_root /home/asatsan2/Projects/EEG-Pain-Estimation/data \
-    --no-grid-search \
-    --models  transformer cnn_transformer 
+    --models cnn_transformer 
+ 
+    python /home/asatsan2/Projects/EEG-Pain-Estimation/notebooks/dl_train_1000hz_gridsearch.py \
+         --task none_vs_pain \
+        --data_root /home/asatsan2/Projects/EEG-Pain-Estimation/data \
+        --grid-epochs 20 \
+        --grid-patience 7 \
+        --epochs 30 \
+        --patience 10 \
+        --seed 42
+        --models  transformer cnn_transformer deep_cnn_lstm
+ 
 
     python /home/asatsan2/Projects/EEG-Pain-Estimation/notebooks/dl_train_1000hz_gridsearch.py \
     --task none_vs_pain \
@@ -2062,5 +2035,5 @@ python /home/asatsan2/Projects/EEG-Pain-Estimation/notebooks/dl_train_1000hz_gri
 python /home/asatsan2/Projects/EEG-Pain-Estimation/notebooks/dl_train_1000hz_gridsearch.py --task none_vs_pain --models cnn lstm svm random_forest
 python /home/asatsan2/Projects/EEG-Pain-Estimation/notebooks/dl_train_1000hz_gridsearch.py --task none_vs_pain --models svm random_forest
 
-# Save directory will be created automatically
+# Save directory will be created automatically..
     """

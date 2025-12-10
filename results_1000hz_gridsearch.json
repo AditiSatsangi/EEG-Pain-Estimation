@@ -7,10 +7,21 @@
   },
   "grid_search": {
     "enabled": true,
-    "grid_epochs": 30,
-    "grid_patience": 10
+    "grid_epochs": 20,
+    "grid_patience": 7
   },
-  "best_hyperparameters": {},
+  "best_hyperparameters": {
+    "cnn_transformer": {
+      "cnn_filters": 64,
+      "d_model": 128,
+      "nhead": 8,
+      "num_layers": 4,
+      "dropout": 0.3,
+      "lr": 0.0001,
+      "weight_decay": 1e-05,
+      "batch_size": 64
+    }
+  },
   "dataset_info": {
     "sampling_rate": 1000,
     "time_points": 1001,
@@ -31,5 +42,63 @@
     "test_size": 0.25,
     "random_state": 42
   },
-  "results": {}
+  "results": {
+    "cnn_transformer": {
+      "accuracy": 0.40780944541619507,
+      "balanced_accuracy": 0.5,
+      "f1_macro": 0.2896765941896583,
+      "f1_weighted": 0.2362657024530735,
+      "precision_per_class": [
+        0.40780944541619507,
+        0.0
+      ],
+      "recall_per_class": [
+        1.0,
+        0.0
+      ],
+      "f1_per_class": [
+        0.5793531883793166,
+        0.0
+      ],
+      "support_per_class": [
+        7927,
+        11511
+      ],
+      "report": "              precision    recall  f1-score   support\n\n        none       0.41      1.00      0.58      7927\n        pain       0.00      0.00      0.00     11511\n\n    accuracy                           0.41     19438\n   macro avg       0.20      0.50      0.29     19438\nweighted avg       0.17      0.41      0.24     19438\n",
+      "confusion_matrix": [
+        [
+          7927,
+          0
+        ],
+        [
+          11511,
+          0
+        ]
+      ],
+      "class_names": [
+        "none",
+        "pain"
+      ],
+      "mean_confidence": 0.5084633827209473,
+      "std_confidence": 0.000384976010536775,
+      "training_info": {
+        "best_epoch": 5,
+        "best_val_loss": 0.6931650994912438,
+        "best_val_acc": 0.4044055111413506,
+        "best_val_f1": 0.2879549445891116,
+        "total_epochs": 15,
+        "early_stopped": true
+      },
+      "best_hyperparameters": {
+        "cnn_filters": 64,
+        "d_model": 128,
+        "nhead": 8,
+        "num_layers": 4,
+        "dropout": 0.3,
+        "lr": 0.0001,
+        "weight_decay": 1e-05,
+        "batch_size": 64
+      }
+    }
+  }
 }
