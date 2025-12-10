@@ -20,6 +20,8 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 *.log
+
+# Ignore macOS metadata folder
 __MACOSX/
 
 
@@ -33,7 +35,7 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *.cover
-.pytest_cache/
+.pytest_cache
 .hypothesis/
 .cover/
 *.txt
