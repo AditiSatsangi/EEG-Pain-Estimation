@@ -1,4 +1,4 @@
-# EEG-Pain-Estimation
+# EEG-Based Automatic Pain Recognition Using Machine Learning and Deep Learning Models
 
 A complete pipeline for EEG-based pain estimation using both Deep Learning and Classical Machine Learning models. Works with 1000 Hz EEG segment data stored as `.npz` files and metadata in `index.csv`.
 
@@ -319,4 +319,5 @@ For questions or feedback, please open an issue on the GitHub repository.
 ---
 
 If you find this project useful, please consider giving it a star!
+
 
