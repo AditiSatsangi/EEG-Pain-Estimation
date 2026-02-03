@@ -16,29 +16,6 @@ The proposed model, **MT-WAN (Multi-Task Window-Aware Network)**, improves a str
 
 ---
 
-## Repository Structure
-
-EEG-Pain-Estimation/
-├── data/
-│   ├── npz/                     # EEG epochs (64 × 1001 at 1000 Hz)
-│   ├── index.csv                # metadata: participant, window, rating_bin
-│   └── export_raw_1000hz_v2.log
-│
-├── notebooks/
-│   ├── Data loading and Analysis.ipynb
-│   └── data.ipynb
-│
-├── scripts/
-│   ├── DL_final_training.py        # final MT-WAN training
-│   ├── dl_train_1000hz_gridsearch.py
-│   ├── ml_final_train.py           # ML baselines
-│   └── interpretability_dl.py
-│
-├── saved_models/                   # trained checkpoints
-└── results/                        # figures, logs, JSON outputs
-
----
-
 ## Data Format
 
 Each `.npz` file contains one EEG epoch:
@@ -138,5 +115,6 @@ Final model uses **λ = 0.2**
 ## Contact
 
 For questions or collaboration, please open an issue in this repository.
+
 
 
