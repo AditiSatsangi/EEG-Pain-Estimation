@@ -1950,9 +1950,9 @@ if __name__ == '__main__':
     --seed 42
 
     screen -S painjob1 -dm bash -c "
-    conda activate eeg;
+    conda activate eeg; 
          python /home/asatsan2/Projects/EEG-Pain-Estimation/notebooks/dl_train_1000hz_gridsearch.py \
-         --task none_vs_pain \
+         --rcftask none_vs_pain \
         --data_root /home/asatsan2/Projects/EEG-Pain-Estimation/data \
         --grid-epochs 20 \
         --grid-patience 7 \
