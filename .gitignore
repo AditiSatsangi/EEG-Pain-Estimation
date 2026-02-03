@@ -1,6 +1,12 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
-
+env/
+venv/
+ENV/
+data/
+results/
+saved_models/
+results~eaa7a5b (Initial commit)/
 # Ignore macOS metadata folder
 __MACOSX/
 .DS_Store
