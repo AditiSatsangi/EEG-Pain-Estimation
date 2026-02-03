@@ -56,6 +56,9 @@ ipython_config.py
 env/
 venv/
 ENV/
+data/
+results/
+saved_models/
 
 # Python packages
 __pypackages__/
