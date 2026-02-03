@@ -2,63 +2,6 @@
 
 A complete pipeline for EEG-based pain estimation using both Deep Learning and Classical Machine Learning models. Works with 1000 Hz EEG segment data stored as `.npz` files and metadata in `index.csv`.
 
-## 📂 Repository Structure
-
-```
-EEG-Pain-Estimation/
-│
-├── notebooks/
-│   ├── __pycache__/
-│   ├── Data loading and Analysis.ipynb
-│   └── data.ipynb
-│
-├── results/
-│   ├── figures/
-│   │   ├── Confusion.matrix.png
-│   │   ├── architecture.png
-│   │   ├── gradcam_projected_on_eeg.png
-│   │   ├── gradcam_windowaware.png
-│   │   └── window_embedding_heatmap.png
-│   └── results_best_model.json
-│
-├── saved_models/
-│   ├── cnn_best.pth
-│   ├── cnn_transformer_best.pth
-│   ├── deep_cnn_lstm_best.pth
-│   ├── lstm_best.pth
-│   └── transformer_best.pth
-│
-├── scripts/
-│   ├── dl_train_1000hz_gridsearch.py
-│   ├── train_ml.py
-│   └── train.py
-│
-├── src/
-│   ├── data/
-│   │   ├── dataset.py
-│   │   ├── indexing.py
-│   │   └── task.py
-│   ├── gradcam/
-│   │   └── gradcam.py
-│   ├── models/
-│   │   ├── cnn_baselines.py
-│   │   ├── deep_cnn_lstm.py
-│   │   └── window_aware_cnn_lstm.py
-│   ├── training/
-│   │   ├── classical_ml.py
-│   │   └── trainer_dl.py
-│   ├── utils/
-│   │   ├── io_utils.py
-│   │   └── seed.py
-│   └── __init__.py
-│
-├── .gitignore
-├── environment.yml
-├── LICENSE
-├── README.md
-└── requirements.txt
-```
-
 ## 🚀 Quick Start
 
 ### 1. Install Dependencies
@@ -319,6 +262,7 @@ For questions or feedback, please open an issue on the GitHub repository.
 ---
 
 If you find this project useful, please consider giving it a star!
+
 
 
 
