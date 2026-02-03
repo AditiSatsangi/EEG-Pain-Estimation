@@ -6,7 +6,6 @@ __MACOSX/
 .DS_Store
 ._*
 
-
 *.py[cod]
 *$py.class
 /data/
