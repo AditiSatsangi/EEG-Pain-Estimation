@@ -1,46 +1,55 @@
-# MT-WAN: Multi-Task Window-Aware Network for Phase-Aware EEG Pain Decoding
+# MT-WAN: Phase-Aware EEG Pain Decoding via Multi-Task Learning
 
-This repository implements a complete pipeline for EEG-based pain estimation using:
-
-• Deep Learning: Hybrid Deep CNN–BiLSTM baseline and MT-WAN (multi-task pain + window supervision)  
-• Classical ML: XGBoost / SVM / Logistic Regression / Random Forest baselines  
-• Strict subject-wise evaluation with no participant leakage  
-• Phase-aware learning across three EEG windows:  
-  - Baseline (−1.0–0.0 s)  
-  - ERP (−0.2–0.8 s)  
-  - Post (0.0–1.0 s)
+This repository implements a complete and reproducible pipeline for **EEG-based pain classification** using both **classical machine learning** and **deep learning**.  
+The proposed model, **MT-WAN (Multi-Task Window-Aware Network)**, improves a strong Deep CNN–BiLSTM baseline by adding **auxiliary supervision on EEG temporal phases (Baseline / ERP / Post)** to encourage physiologically meaningful representations.
 
 ---
 
-## Core Idea
+## Key Contributions
 
-**MT-WAN** extends the pain-only Deep CNN–BiLSTM with an auxiliary window head:
+• **Multi-task learning for phase awareness**  
+  Jointly learns pain classification + window identification  
+• **No window labels required at inference**  
+• **Strict subject-wise evaluation (no leakage)**  
+• **Robust across thresholds T ∈ {3,5,7}**  
+• **Interpretability with Grad×Input saliency**
 
-L = L_pain + λ L_window
+---
 
-• Encourages phase-sensitive representations  
-• No window labels required at inference  
-• Improves generalization and interpretability
+## Repository Structure
+
+EEG-Pain-Estimation/
+├── data/
+│   ├── npz/                     # EEG epochs (64 × 1001 at 1000 Hz)
+│   ├── index.csv                # metadata: participant, window, rating_bin
+│   └── export_raw_1000hz_v2.log
+│
+├── notebooks/
+│   ├── Data loading and Analysis.ipynb
+│   └── data.ipynb
+│
+├── scripts/
+│   ├── DL_final_training.py        # final MT-WAN training
+│   ├── dl_train_1000hz_gridsearch.py
+│   ├── ml_final_train.py           # ML baselines
+│   └── interpretability_dl.py
+│
+├── saved_models/                   # trained checkpoints
+└── results/                        # figures, logs, JSON outputs
 
 ---
 
 ## Data Format
 
-Expected layout:
+Each `.npz` file contains one EEG epoch:
 
-data/
-├── index.csv
-└── npz/
-    ├── sample_01.npz
-    ├── sample_02.npz
-    └── ...
+• Shape: **(64 channels × 1001 time points)**  
+• Sampling rate: **1000 Hz**
 
-Each .npz contains EEG epoch:
-• Shape: (64, 1001)  → channels × time (1000 Hz)
+`index.csv` must include:
 
-index.csv must contain at least:
-• participant id (for group split)  
-• window label (Baseline/ERP/Post)  
+• participant ID (for group split)  
+• window label (Baseline / ERP / Post)  
 • rating_bin (pain label)  
 • file identifier
 
@@ -59,69 +68,75 @@ pip install -r requirements.txt
 
 ## Training
 
-### 1) Final Deep Learning Run
+### Train Final MT-WAN Model
 python scripts/DL_final_training.py
 
-### 2) Grid Search / Tuning
+### Hyperparameter Search
 python scripts/dl_train_1000hz_gridsearch.py
 
-### 3) Classical ML Baselines
+### Classical ML Baselines
 python scripts/ml_final_train.py
 
 ---
 
 ## Evaluation Protocol
 
-• Strict subject-wise split using GroupShuffleSplit  
-• Multi-threshold evaluation T ∈ {3,5,7}  
-• Primary threshold: T = 5  
+• **Subject-wise split** using GroupShuffleSplit  
+• **Multi-threshold** evaluation: T ∈ {3,5,7}  
+• **Primary threshold: T = 5**  
 • Metrics: Accuracy, Balanced Accuracy, Macro-F1  
-• Bootstrap CI (2000 resamples) for reliability
+• **Bootstrap CI (2000 resamples)** for reliability
 
 ---
 
-## Interpretability (T = 5 only)
+## Interpretability
 
-Grad×Input saliency and ERP-alignment proxy:
+Grad×Input saliency is used at **T = 5** to assess:
+
+• phase-specific attribution  
+• ERP alignment ratio  
+• window-wise relevance
+
+Run:
 
 python scripts/interpretability_dl.py
 
-Outputs saved to:
+Outputs saved in:
+
 results/
 
 ---
 
 ## Outputs
 
-saved_models/
-  ├── *.pth
-
-results/
-  ├── *.json
-  ├── *.png
-  └── logs
-
-data/
-  ├── paper_baseline_vs_mtl_*.json
+saved_models/    → trained checkpoints  
+results/         → figures, metrics, JSON logs  
+data/            → experiment result files
 
 ---
 
-## Notes
+## Model Overview
 
-• Baseline DL = pain-only Deep CNN–BiLSTM  
-• Final MT-WAN uses λ = 0.2  
-• All experiments prevent subject leakage  
-• Window supervision is used only during training
+**Baseline DL:** Deep CNN–BiLSTM (pain-only)  
+**Proposed:** MT-WAN (pain + window supervision)
+
+Loss:
+
+L = L_pain + λ L_window
+
+Final model uses **λ = 0.2**
 
 ---
 
 ## Authors
 
-Dilanjan Diyabalanage – PhD Physics, Western University
-Aditi Satsangi – MSc Computer Science, Western University  
+**Aditi Satsangi** – MSc Computer Science, Western University  
+**Dilanjan Diyabalanage** – PhD Physics, Western University
 
 ---
 
 ## Contact
 
-Open an issue on the repository for questions or collaboration.
+For questions or collaboration, please open an issue in this repository.
+
+
