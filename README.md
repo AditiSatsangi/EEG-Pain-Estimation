@@ -170,16 +170,6 @@ data/            → dataset files
 - XGBoost  
 - Window-aware ML variants with feature–window interactions
 
----
-
-## 👩‍💻 Authors
-
-**Aditi Satsangi**  
-MSc Computer Science, Western University  
-GitHub: https://github.com/AditiSatsangi
-
-**Dilanjan Diyabalanage**  
-PhD Physics, Western University
 
 ---
 
@@ -192,6 +182,7 @@ For questions, issues, or collaboration:
 ---
 
 ⭐ If you find this work useful, consider giving the repository a star!
+
 
 
 
