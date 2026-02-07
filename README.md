@@ -1,120 +1,198 @@
 # MT-WAN: Phase-Aware EEG Pain Decoding via Multi-Task Learning
 
 This repository implements a complete and reproducible pipeline for **EEG-based pain classification** using both **classical machine learning** and **deep learning**.  
-The proposed model, **MT-WAN (Multi-Task Window-Aware Network)**, improves a strong Deep CNN–BiLSTM baseline by adding **auxiliary supervision on EEG temporal phases (Baseline / ERP / Post)** to encourage physiologically meaningful representations.
+
+We propose **MT-WAN (Multi-Task Window-Aware Network)**, which improves a strong **pain-only Deep CNN–BiLSTM** baseline via **implicit window supervision**.  
+The model is trained to predict both:
+
+- **Pain label** (binary: no significant pain vs. significant pain)  
+- **EEG temporal phase** (Baseline / ERP / Post)
+
+🟢 **Key idea:**  
+Window labels are used **only during training** as an auxiliary task.  
+At inference time, the model requires **no window information** → practical for real clinical use.
 
 ---
 
-## Key Contributions
+## 🔬 Key Contributions
 
-• **Multi-task learning for phase awareness**  
-  Jointly learns pain classification + window identification  
-• **No window labels required at inference**  
-• **Strict subject-wise evaluation (no leakage)**  
-• **Robust across thresholds T ∈ {3,5,7}**  
-• **Interpretability with Grad×Input saliency**
-
----
-
-## Data Format
-
-Each `.npz` file contains one EEG epoch:
-
-• Shape: **(64 channels × 1001 time points)**  
-• Sampling rate: **1000 Hz**
-
-`index.csv` must include:
-
-• participant ID (for group split)  
-• window label (Baseline / ERP / Post)  
-• rating_bin (pain label)  
-• file identifier
+- **Implicit phase supervision via multi-task learning**  
+  → joint learning of pain + window identity  
+- **Zero-label inference** – no window tags required at deployment  
+- **Strict subject-wise evaluation** (no participant leakage)  
+- **Robust across thresholds** T ∈ {3, 5, 7}  
+- **Physiological interpretability** using Grad×Input saliency
 
 ---
 
-## Installation
+## 📁 Data Format
+
+Each EEG epoch is stored as a `.npz` file:
+
+- **Shape:** `(64 channels × 1001 time points)`  
+- **Sampling rate:** `1000 Hz`
+
+### Expected Structure
+
+```
+data/
+├── index.csv
+└── npz/
+    ├── sample_0001.npz
+    ├── sample_0002.npz
+    └── ...
+```
+
+### Required Columns in `index.csv`
+
+- `participant_id` → used for subject-wise split  
+- `window` → {Baseline, ERP, Post} (used only for training auxiliary task)  
+- `rating_bin` → binary pain label  
+- `file_id` → maps to `.npz` file
+
+---
+
+## ⚙️ Installation
 
 ### Conda
+
+```bash
 conda env create -f environment.yml
 conda activate eeg
+```
 
 ### Pip
+
+```bash
 pip install -r requirements.txt
+```
 
 ---
 
-## Training
+## 🚀 Training
 
-### Train Final MT-WAN Model
+### Train Final MT-WAN Model (λ = 0.2)
+
+```bash
 python scripts/DL_final_training.py
+```
 
 ### Hyperparameter Search
+
+```bash
 python scripts/dl_train_1000hz_gridsearch.py
+```
 
 ### Classical ML Baselines
+
+```bash
 python scripts/ml_final_train.py
+```
 
 ---
 
-## Evaluation Protocol
+## 📊 Evaluation Protocol
 
-• **Subject-wise split** using GroupShuffleSplit  
-• **Multi-threshold** evaluation: T ∈ {3,5,7}  
-• **Primary threshold: T = 5**  
-• Metrics: Accuracy, Balanced Accuracy, Macro-F1  
-• **Bootstrap CI (2000 resamples)** for reliability
+- **Subject-wise split:** GroupShuffleSplit  
+- **Multi-threshold evaluation:** T ∈ {3, 5, 7}  
+- **Primary threshold:** T = 5  
+- **Metrics**
+  - Accuracy  
+  - Balanced Accuracy  
+  - Macro-F1  
+
+- **Statistical reliability:**  
+  Bootstrap CI with **2000 resamples** (primary threshold)
 
 ---
 
-## Interpretability
+## 🧠 Interpretability (T = 5 Only)
 
-Grad×Input saliency is used at **T = 5** to assess:
+Interpretability is evaluated using **Grad×Input saliency**:
 
-• phase-specific attribution  
-• ERP alignment ratio  
-• window-wise relevance
+- Phase-specific attribution (Baseline / ERP / Post)  
+- ERP alignment ratio  
+- Window-wise saliency energy
 
 Run:
 
+```bash
 python scripts/interpretability_dl.py
+```
 
-Outputs saved in:
+Outputs saved to:
 
+```
 results/
+```
 
 ---
 
-## Outputs
+## 🧩 Model Overview
 
+### Baseline
+
+- **Deep CNN–BiLSTM (pain-only)**
+
+### Proposed Model: MT-WAN
+
+- Shared encoder  
+- Pain classification head  
+- Auxiliary window head (training only)
+
+#### Training Objective
+
+```
+L = L_pain + λ L_window
+```
+
+Final model uses:
+
+👉 **λ = 0.2**
+
+---
+
+## 📦 Outputs
+
+```
 saved_models/    → trained checkpoints  
 results/         → figures, metrics, JSON logs  
-data/            → experiment result files
+data/            → dataset files  
+```
 
 ---
 
-## Model Overview
+## 🧪 Classical ML Models
 
-**Baseline DL:** Deep CNN–BiLSTM (pain-only)  
-**Proposed:** MT-WAN (pain + window supervision)
-
-Loss:
-
-L = L_pain + λ L_window
-
-Final model uses **λ = 0.2**
+- Logistic Regression (balanced)  
+- Linear SVM (balanced)  
+- Random Forest  
+- XGBoost  
+- Window-aware ML variants with feature–window interactions
 
 ---
 
-## Authors
+## 👩‍💻 Authors
 
-**Aditi Satsangi** – MSc Computer Science, Western University  
-**Dilanjan Diyabalanage** – PhD Physics, Western University
+**Aditi Satsangi**  
+MSc Computer Science, Western University  
+GitHub: https://github.com/AditiSatsangi
+
+**Dilanjan Diyabalanage**  
+PhD Physics, Western University
 
 ---
 
-## Contact
+## 📬 Contact
 
-For questions or collaboration, please open an issue in this repository.
+For questions, issues, or collaboration:
+
+👉 Please open an issue in this repository.
+
+---
+
+⭐ If you find this work useful, consider giving the repository a star!
+
 
 
 
