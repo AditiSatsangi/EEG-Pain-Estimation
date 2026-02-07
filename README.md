@@ -47,6 +47,16 @@ L = L_pain + λ L_window
 
 ---
 
+## 📊 Key Results
+
+- At the **primary threshold T = 5**, MT-WAN improved performance over the strong Deep CNN–BiLSTM baseline:  
+  - **Accuracy:** 0.728 → **0.737**  
+  - **Macro-F1:** 0.719 → **0.729**  
+- Bootstrap analysis (2000 resamples) showed **statistically reliable gains** with strictly positive Δ(MTL–Baseline) confidence intervals.  
+- Under stricter threshold (**T = 7**), MT-WAN achieved **0.801 accuracy**, demonstrating robustness across pain definitions.
+
+---
+
 ## 🔬 What Is New in This Work
 
 - **Implicit window supervision** instead of manual window input  
@@ -57,7 +67,12 @@ L = L_pain + λ L_window
 
 ---
 
-## 📁 Data Format
+## 📁 Dataset Used
+
+This work is based on the publicly available EEG pain dataset from OpenNeuro:
+
+🔗 **OpenNeuro Dataset ds005280**  
+https://openneuro.org/datasets/ds005280
 
 Each `.npz` file represents one EEG epoch:
 
@@ -147,12 +162,6 @@ Run:
 python scripts/interpretability_dl.py
 ```
 
-Results saved to:
-
-```
-results/
-```
-
 ---
 
 ## 🧪 Models Included
@@ -170,6 +179,7 @@ results/
 - Random Forest  
 - XGBoost  
 - Window-aware ML variants
+
 ---
 
 ## 📬 Contact
@@ -177,6 +187,8 @@ results/
 For questions or collaboration, please open an issue in this repository.
 
 ⭐ If this work is useful, consider starring the repo!
+
+
 
 
 
