@@ -170,17 +170,6 @@ results/
 - Random Forest  
 - XGBoost  
 - Window-aware ML variants
-
----
-
-## 📦 Outputs
-
-```
-saved_models/   → checkpoints  
-results/        → metrics, figures, JSON logs  
-data/           → dataset and experiment files
-```
-
 ---
 
 ## 📬 Contact
@@ -188,5 +177,6 @@ data/           → dataset and experiment files
 For questions or collaboration, please open an issue in this repository.
 
 ⭐ If this work is useful, consider starring the repo!
+
 
 
