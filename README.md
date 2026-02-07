@@ -11,7 +11,7 @@ At inference time, **no window labels are required** — making the approach pra
 
 ## 🧩 Overview of the Approach
 
-Our pipeline follows the workflow illustrated in **Fig. 1 (Overall MT-WAN Framework)**:
+The proposed pipeline follows the workflow shown below:
 
 - EEG epochs and metadata are preprocessed with:
   - epoch rejection flags  
@@ -187,6 +187,7 @@ python scripts/interpretability_dl.py
 For questions or collaboration, please open an issue in this repository.
 
 ⭐ If this work is useful, consider starring the repo!
+
 
 
 
