@@ -1,54 +1,83 @@
-# MT-WAN: Phase-Aware EEG Pain Decoding via Multi-Task Learning
+# MT-WAN: Implicit Window Supervision for Phase-Aware EEG Pain Decoding
 
-This repository implements a complete and reproducible pipeline for **EEG-based pain classification** using both **classical machine learning** and **deep learning**.  
-
-We propose **MT-WAN (Multi-Task Window-Aware Network)**, which improves a strong **pain-only Deep CNN–BiLSTM** baseline via **implicit window supervision**.  
-The model is trained to predict both:
-
-- **Pain label** (binary: no significant pain vs. significant pain)  
-- **EEG temporal phase** (Baseline / ERP / Post)
+This repository contains the implementation of **EEG-based pain estimation using multi-task learning**.  
+We propose **MT-WAN (Multi-Task Window-Aware Network)**, which extends a strong **Deep CNN–BiLSTM pain classifier** with **implicit supervision on EEG temporal phases** (Baseline / ERP / Post-Stimulus).
 
 🟢 **Key idea:**  
-Window labels are used **only during training** as an auxiliary task.  
-At inference time, the model requires **no window information** → practical for real clinical use.
+The model is trained to *predict the EEG window as an auxiliary task*, which acts as a physiological regularizer.  
+At inference time, **no window labels are required** — making the approach practical for real-world clinical deployment.
 
 ---
 
-## 🔬 Key Contributions
+## 🧩 Overview of the Approach
 
-- **Implicit phase supervision via multi-task learning**  
-  → joint learning of pain + window identity  
-- **Zero-label inference** – no window tags required at deployment  
-- **Strict subject-wise evaluation** (no participant leakage)  
-- **Robust across thresholds** T ∈ {3, 5, 7}  
-- **Physiological interpretability** using Grad×Input saliency
+Our pipeline follows the workflow illustrated in **Fig. 1 (Overall MT-WAN Framework)**:
+
+- EEG epochs and metadata are preprocessed with:
+  - epoch rejection flags  
+  - channel padding/truncation to a fixed 64-channel montage  
+  - per-channel z-score normalization  
+- A **strict subject-wise split** (GroupShuffleSplit) prevents participant leakage  
+- Experiments are repeated for **pain thresholds T ∈ {3, 5, 7}**
+
+### Modeling Streams
+
+1. **Classical ML (engineered features)**
+   - PSD / ROI / spectral–temporal descriptors  
+   - RF / XGBoost / SVM  
+   - Window-aware ML with feature × window interactions
+
+2. **Deep Learning**
+   - **Baseline:** Deep CNN–BiLSTM (pain-only)
+   - **Proposed MT-WAN:**  
+     - Shared CNN–BiLSTM encoder  
+     - Pain head + Window head  
+     - Multi-task loss:
+
+```
+L = L_pain + λ L_window
+```
+
+   - Final model uses **λ = 0.2**
+
+3. **Evaluation**
+   - Acc, BalAcc, Macro-F1  
+   - Bootstrap 95% CI for Δ(MTL–Baseline)  
+   - Interpretability (T = 5) using **Grad×Input saliency + ERP alignment ratio**
+
+---
+
+## 🔬 What Is New in This Work
+
+- **Implicit window supervision** instead of manual window input  
+- **Zero-label inference** – model does not need phase tags at test time  
+- **Physiologically grounded learning** through auxiliary window task  
+- **Statistical reliability** via bootstrap CIs  
+- **Phase-aware interpretability** without Grad-CAM
 
 ---
 
 ## 📁 Data Format
 
-Each EEG epoch is stored as a `.npz` file:
+Each `.npz` file represents one EEG epoch:
 
-- **Shape:** `(64 channels × 1001 time points)`  
+- **Shape:** `(64 × 1001)`  
 - **Sampling rate:** `1000 Hz`
 
-### Expected Structure
+### Required `index.csv` fields
+
+- `participant_id` – for subject-wise split  
+- `window` – {Baseline, ERP, Post} *(training only)*  
+- `rating_bin` – binary pain label  
+- `file_id` – maps to .npz file
 
 ```
 data/
-├── index.csv
-└── npz/
-    ├── sample_0001.npz
-    ├── sample_0002.npz
-    └── ...
+ ├── index.csv
+ └── npz/
+      ├── sub01_ep01.npz
+      └── ...
 ```
-
-### Required Columns in `index.csv`
-
-- `participant_id` → used for subject-wise split  
-- `window` → {Baseline, ERP, Post} (used only for training auxiliary task)  
-- `rating_bin` → binary pain label  
-- `file_id` → maps to `.npz` file
 
 ---
 
@@ -71,7 +100,7 @@ pip install -r requirements.txt
 
 ## 🚀 Training
 
-### Train Final MT-WAN Model (λ = 0.2)
+### Final MT-WAN (λ = 0.2)
 
 ```bash
 python scripts/DL_final_training.py
@@ -94,25 +123,23 @@ python scripts/ml_final_train.py
 ## 📊 Evaluation Protocol
 
 - **Subject-wise split:** GroupShuffleSplit  
-- **Multi-threshold evaluation:** T ∈ {3, 5, 7}  
+- **Multi-threshold:** T ∈ {3,5,7}  
 - **Primary threshold:** T = 5  
-- **Metrics**
+- Metrics:  
   - Accuracy  
   - Balanced Accuracy  
   - Macro-F1  
-
-- **Statistical reliability:**  
-  Bootstrap CI with **2000 resamples** (primary threshold)
+- **Bootstrap CI (2000 resamples)** for Δ(MTL – Baseline)
 
 ---
 
-## 🧠 Interpretability (T = 5 Only)
+## 🧠 Interpretability
 
-Interpretability is evaluated using **Grad×Input saliency**:
+Evaluated only at **T = 5**:
 
-- Phase-specific attribution (Baseline / ERP / Post)  
-- ERP alignment ratio  
-- Window-wise saliency energy
+- Grad×Input saliency per epoch  
+- Saliency energy in Baseline / ERP / Post  
+- **ERP alignment ratio**
 
 Run:
 
@@ -120,7 +147,7 @@ Run:
 python scripts/interpretability_dl.py
 ```
 
-Outputs saved to:
+Results saved to:
 
 ```
 results/
@@ -128,62 +155,38 @@ results/
 
 ---
 
-## 🧩 Model Overview
+## 🧪 Models Included
 
-### Baseline
+### Deep Learning
+- CNN  
+- BiLSTM  
+- Transformer  
+- **Deep CNN–BiLSTM (Baseline)**  
+- **MT-WAN (Proposed)**
 
-- **Deep CNN–BiLSTM (pain-only)**
-
-### Proposed Model: MT-WAN
-
-- Shared encoder  
-- Pain classification head  
-- Auxiliary window head (training only)
-
-#### Training Objective
-
-```
-L = L_pain + λ L_window
-```
-
-Final model uses:
-
-👉 **λ = 0.2**
+### Classical ML
+- Logistic Regression (balanced)  
+- Linear SVM (balanced)  
+- Random Forest  
+- XGBoost  
+- Window-aware ML variants
 
 ---
 
 ## 📦 Outputs
 
 ```
-saved_models/    → trained checkpoints  
-results/         → figures, metrics, JSON logs  
-data/            → dataset files  
+saved_models/   → checkpoints  
+results/        → metrics, figures, JSON logs  
+data/           → dataset and experiment files
 ```
-
----
-
-## 🧪 Classical ML Models
-
-- Logistic Regression (balanced)  
-- Linear SVM (balanced)  
-- Random Forest  
-- XGBoost  
-- Window-aware ML variants with feature–window interactions
-
 
 ---
 
 ## 📬 Contact
 
-For questions, issues, or collaboration:
+For questions or collaboration, please open an issue in this repository.
 
-👉 Please open an issue in this repository.
-
----
-
-⭐ If you find this work useful, consider giving the repository a star!
-
-
-
+⭐ If this work is useful, consider starring the repo!
 
 
