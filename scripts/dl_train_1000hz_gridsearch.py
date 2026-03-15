@@ -22,6 +22,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader, TensorDataset
+
 # ============================================================================
 # REPRODUCIBILITY SETUP
 # ============================================================================
@@ -1939,6 +1940,7 @@ if __name__ == '__main__':
     main()
     
     """
+    
     screen -S myjob -dm python /home/asatsan2/Projects/EEG-Pain-Estimation/notebooks/dl_train_1000hz_gridsearch.py \
     --task none_vs_pain \
     --data_root /home/asatsan2/Projects/EEG-Pain-Estimation/data \
@@ -1994,5 +1996,6 @@ if __name__ == '__main__':
 python /home/asatsan2/Projects/EEG-Pain-Estimation/notebooks/dl_train_1000hz_gridsearch.py --task none_vs_pain --models cnn lstm svm random_forest
 python /home/asatsan2/Projects/EEG-Pain-Estimation/notebooks/dl_train_1000hz_gridsearch.py --task none_vs_pain --models svm random_forest
 
-# Save directory will be created automatically..
+
+
     """
